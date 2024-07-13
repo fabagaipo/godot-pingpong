@@ -1,0 +1,84 @@
+[gd_scene load_steps=8 format=3 uid="uid://4aknbqsyl43t"]
+
+[ext_resource type="PackedScene" uid="uid://b8ajmqboacq52" path="res://Scenes/walls.tscn" id="1_jftfl"]
+[ext_resource type="PackedScene" uid="uid://dna8v87ejm83c" path="res://Scenes/Paddles/paddle.tscn" id="2_57bq5"]
+[ext_resource type="PackedScene" uid="uid://cqquavdda2bnr" path="res://Scenes/ball.tscn" id="3_bhxr1"]
+[ext_resource type="Script" path="res://Scenes/Paddles/enemy_paddle.gd" id="3_vb26s"]
+[ext_resource type="PackedScene" uid="uid://bcy3wfv7awybg" path="res://Scenes/edge.tscn" id="4_fxxow"]
+[ext_resource type="PackedScene" uid="uid://3ow2mnf5gr3y" path="res://Scenes/ui.tscn" id="6_cmcx5"]
+
+[sub_resource type="GDScript" id="GDScript_cm15u"]
+script/source = "extends Node2D
+
+var enemy_points = 0
+var player_points = 0
+
+@onready var enemy_paddle = $EnemyPaddle
+@onready var player_paddle = $Paddle
+@onready var ball = $Ball as Ball
+@onready var ui = $UI as UI
+
+
+func _on_enemy_point_scored():
+	enemy_points += 1
+	ui.update_enemy_points(enemy_points)
+	print_debug(enemy_points)
+	reset_game_state()
+
+func _on_player_point_scored():
+	player_points += 1
+	ui.update_player_points(player_points)
+	print_debug(enemy_points)
+	reset_game_state()
+	
+func reset_game_state():
+	enemy_paddle.global_position.y = 0
+	player_paddle.global_position.y = 0
+	ball.global_position = Vector2.ZERO
+	ball.velocity = Vector2.ZERO
+	enemy_paddle.linear_velocity = Vector2.ZERO
+	player_paddle.linear_velocity = Vector2.ZERO
+	ball.start_ball()
+"
+
+[node name="main" type="Node2D"]
+script = SubResource("GDScript_cm15u")
+
+[node name="Walls" type="Node" parent="."]
+
+[node name="TopWall" parent="Walls" instance=ExtResource("1_jftfl")]
+position = Vector2(5, -683)
+
+[node name="BottomWall" parent="Walls" instance=ExtResource("1_jftfl")]
+position = Vector2(1, 670)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(0.4, 0.4)
+
+[node name="Paddle" parent="." instance=ExtResource("2_57bq5")]
+position = Vector2(-1000, -4)
+gravity_scale = 0.0
+lock_rotation = true
+
+[node name="EnemyPaddle" parent="." node_paths=PackedStringArray("ball") instance=ExtResource("2_57bq5")]
+position = Vector2(1000, -4)
+gravity_scale = 0.0
+lock_rotation = true
+script = ExtResource("3_vb26s")
+paddle_speed = 35000
+ball = NodePath("../Ball")
+
+[node name="Ball" parent="." instance=ExtResource("3_bhxr1")]
+
+[node name="LeftEdge" parent="." instance=ExtResource("4_fxxow")]
+position = Vector2(-1170, -8)
+
+[node name="RightEdge" parent="." instance=ExtResource("4_fxxow")]
+position = Vector2(1175, -4)
+
+[node name="UI" parent="." instance=ExtResource("6_cmcx5")]
+
+[connection signal="body_entered" from="LeftEdge" to="LeftEdge" method="_on_body_entered"]
+[connection signal="point_scored" from="LeftEdge" to="." method="_on_enemy_point_scored"]
+[connection signal="body_entered" from="RightEdge" to="RightEdge" method="_on_body_entered"]
+[connection signal="point_scored" from="RightEdge" to="." method="_on_player_point_scored"]
